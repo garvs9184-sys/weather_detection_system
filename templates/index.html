@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AtmosphereAI — Machine Learning Weather Detection System</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌤️</text></svg>">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="theme-sunny">
+
+  <!-- Dynamic Animated Weather Background Canvas -->
+  <div id="weather-background" class="weather-bg-container">
+    <canvas id="weatherCanvas"></canvas>
+    <div class="weather-overlay"></div>
+  </div>
+
+  <div class="app-layout">
+    <!-- Header / Navbar -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="logo-icon-wrapper">
+          <i class="fa-solid fa-cloud-sun-rain"></i>
+        </div>
+        <div>
+          <h1 class="logo-title">Atmosphere<span>AI</span></h1>
+          <p class="logo-subtitle">Machine Learning Weather Detection System</p>
+        </div>
+      </div>
+
+      <div class="nav-status-pill">
+        <span class="status-dot"></span>
+        <span class="status-text">Random Forest Ensemble &bull; <strong id="header-accuracy">99.97% Accuracy</strong></span>
+      </div>
+
+      <nav class="nav-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="simulator">
+          <i class="fa-solid fa-sliders"></i> Simulator & Predictor
+        </button>
+        <button class="tab-btn" data-tab="live">
+          <i class="fa-solid fa-earth-americas"></i> Live City Detection
+        </button>
+        <button class="tab-btn" data-tab="analytics">
+          <i class="fa-solid fa-chart-pie"></i> ML Model Diagnostics
+        </button>
+        <button class="tab-btn" data-tab="api">
+          <i class="fa-solid fa-code"></i> REST API
+        </button>
+        <button class="tab-btn voice-tab-btn" id="navVoiceBtn">
+          <i class="fa-solid fa-microphone-lines"></i> Voice AI Agent
+        </button>
+      </nav>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="main-container">
+
+      <!-- ================= TAB 1: SIMULATOR & PREDICTOR ================= -->
+      <section id="tab-simulator" class="tab-pane active">
+        <!-- Preset Scenario Quick Selection -->
+        <div class="preset-section">
+          <div class="preset-header">
+            <span><i class="fa-solid fa-bolt-lightning"></i> Instant Scenario Presets:</span>
+          </div>
+          <div class="preset-chips" id="presetChipsContainer">
+            <!-- Dynamically populated or static presets -->
+            <button class="preset-chip" data-preset="summer_heatwave">☀️ Summer Heatwave</button>
+            <button class="preset-chip" data-preset="monsoon_downpour">🌧️ Monsoon Downpour</button>
+            <button class="preset-chip" data-preset="supercell_storm">⛈️ Supercell Storm</button>
+            <button class="preset-chip" data-preset="arctic_blizzard">❄️ Arctic Blizzard</button>
+            <button class="preset-chip" data-preset="dense_fog">🌫️ Dense Fog</button>
+            <button class="preset-chip" data-preset="temperate_overcast">⛅ Overcast Sky</button>
+          </div>
+        </div>
+
+        <div class="workspace-grid">
+          <!-- Parameter Controls Card -->
+          <div class="card glass-card controls-card">
+            <div class="card-header">
+              <div>
+                <h2><i class="fa-solid fa-gauge-high"></i> Atmospheric Telemetry</h2>
+                <p>Adjust environmental parameters to detect the resulting weather state</p>
+              </div>
+              <div class="auto-predict-toggle">
+                <label class="switch">
+                  <input type="checkbox" id="realtimeToggle" checked>
+                  <span class="slider round"></span>
+                </label>
+                <span class="toggle-label">Real-time ML</span>
+              </div>
+            </div>
+
+            <form id="weatherForm" class="parameters-form">
+              <!-- Grid of 8 sliders -->
+              <div class="sliders-grid">
+
+                <!-- 1. Temperature -->
+                <div class="param-group">
+                  <div class="param-label-row">
+                    <label for="temperature"><i class="fa-solid fa-temperature-half text-orange"></i> Temperature</label>
+                    <div class="value-badge"><span id="val_temperature">26.0</span> °C</div>
+                  </div>
+                  <input type="range" id="temperature" min="-25" max="50" step="0.5" value="26.0" class="range-slider">
+                  <div class="range-bounds"><span>-25°C</span><span>0°C</span><span>50°C</span></div>
+                </div>
+
+                <!-- 2. Humidity -->
+                <div class="param-group">
+                  <div class="param-label-row">
+                    <label for="humidity"><i class="fa-solid fa-droplet text-blue"></i> Humidity</label>
+                    <div class="value-badge"><span id="val_humidity">45.0</span> %</div>
+                  </div>
+                  <input type="range" id="humidity" min="5" max="100" step="1" value="45.0" class="range-slider">
+                  <div class="range-bounds"><span>5%</span><span>50%</span><span>100%</span></div>
+                </div>
+
+                <!-- 3. Wind Speed -->
+                <div class="param-group">
+                  <div class="param-label-row">
+                    <label for="wind_speed"><i class="fa-solid fa-wind text-teal"></i> Wind Speed</label>
+                    <div class="value-badge"><span id="val_wind_speed">12.0</span> km/h</div>
+                  </div>
+                  <input type="range" id="wind_speed" min="0" max="120" step="1" value="12.0" class="range-slider">
+                  <div class="range-bounds"><span>0 km/h</span><span>60 km/h</span><span>120 km/h</span></div>
+                </div>
+
+                <!-- 4. Precipitation -->
+                <div class="param-group">
+                  <div class="param-label-row">
+                    <label for="precipitation"><i class="fa-solid fa-cloud-showers-heavy text-cyan"></i> Precipitation</label>
+                    <div class="value-badge"><span id="val_precipitation">0.0</span> mm</div>
+                  </div>
+                  <input type="range" id="precipitation" min="0" max="80" step="0.5" value="0.0" class="range-slider">
+                  <div class="range-bounds"><span>0 mm</span><span>40 mm</span><span>80 mm</span></div>
+                </div>
+
+                <!-- 5. Cloud Cover -->
+                <div class="param-group">
+                  <div class="param-label-row">
+                    <label for="cloud_cover"><i class="fa-solid fa-cloud text-gray"></i> Cloud Cover</label>
+                    <div class="value-badge"><span id="val_cloud_cover">15.0</span> %</div>
+                  </div>
+                  <input type="range" id="cloud_cover" min="0" max="100" step="1" value="15.0" class="range-slider">
+                  <div class="range-bounds"><span>0% (Clear)</span><span>50%</span><span>100% (Dense)</span></div>
+                </div>
+
+                <!-- 6. Atmospheric Pressure -->
+                <div class="param-group">
+                  <div class="param-label-row">
+                    <label for="atmospheric_pressure"><i class="fa-solid fa-compass text-indigo"></i> Atmospheric Pressure</label>
+                    <div class="value-badge"><span id="val_atmospheric_pressure">1018.0</span> hPa</div>
+                  </div>
+                  <input type="range" id="atmospheric_pressure" min="960" max="1045" step="1" value="1018.0" class="range-slider">
+                  <div class="range-bounds"><span>960 hPa (Low)</span><span>1013 hPa</span><span>1045 hPa (High)</span></div>
+                </div>
+
+                <!-- 7. Visibility -->
+                <div class="param-group">
+                  <div class="param-label-row">
+                    <label for="visibility"><i class="fa-solid fa-eye text-emerald"></i> Visibility</label>
+                    <div class="value-badge"><span id="val_visibility">16.0</span> km</div>
+                  </div>
+                  <input type="range" id="visibility" min="0.1" max="20.0" step="0.1" value="16.0" class="range-slider">
+                  <div class="range-bounds"><span>0.1 km (Fog)</span><span>10 km</span><span>20 km (Pristine)</span></div>
+                </div>
+
+                <!-- 8. UV Index -->
+                <div class="param-group">
+                  <div class="param-label-row">
+                    <label for="uv_index"><i class="fa-solid fa-sun text-yellow"></i> UV Index</label>
+                    <div class="value-badge"><span id="val_uv_index">8.0</span> / 12</div>
+                  </div>
+                  <input type="range" id="uv_index" min="0" max="12" step="0.5" value="8.0" class="range-slider">
+                  <div class="range-bounds"><span>0 (None)</span><span>6 (Moderate)</span><span>12 (Extreme)</span></div>
+                </div>
+
+              </div>
+
+              <div class="form-actions">
+                <button type="button" id="resetBtn" class="btn btn-secondary">
+                  <i class="fa-solid fa-rotate-left"></i> Reset Defaults
+                </button>
+                <button type="submit" id="predictBtn" class="btn btn-primary">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Predict Weather Condition
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- ML Prediction Result Card -->
+          <div class="card glass-card prediction-card" id="predictionCard">
+            <div class="card-header">
+              <h2><i class="fa-solid fa-brain"></i> ML Model Inference</h2>
+              <span class="badge" id="severityBadge"><i class="fa-solid fa-circle-check"></i> Normal Conditions</span>
+            </div>
+
+            <div class="prediction-hero">
+              <div class="weather-icon-display" id="weatherIcon">☀️</div>
+              <div class="weather-name-box">
+                <div class="confidence-tag">
+                  <i class="fa-solid fa-shield-halved"></i> Confidence: <span id="confidenceVal">99.8%</span>
+                </div>
+                <h3 id="predictedWeatherName">Sunny / Clear</h3>
+                <p id="weatherHeadline" class="weather-headline">Clear skies with abundant solar radiation</p>
+              </div>
+            </div>
+
+            <!-- Meteorological Synopsis -->
+            <div class="weather-synopsis-box">
+              <p id="weatherDescription">Atmospheric skies are clear with abundant solar radiation, dry-to-moderate air, and excellent visibility.</p>
+            </div>
+
+            <!-- Actionable Lifestyle & Safety Advice -->
+            <div class="advisories-grid">
+              <div class="advisory-card">
+                <div class="advisory-icon"><i class="fa-solid fa-shirt"></i></div>
+                <div>
+                  <span class="advisory-title">Attire & Clothing</span>
+                  <p id="clothingAdvice" class="advisory-text">Light breathable attire, sunglasses, UV sunscreen protection.</p>
+                </div>
+              </div>
+              <div class="advisory-card">
+                <div class="advisory-icon"><i class="fa-solid fa-person-running"></i></div>
+                <div>
+                  <span class="advisory-title">Outdoor Activities</span>
+                  <p id="activityAdvice" class="advisory-text">Great for outdoor athletics, hiking, cycling, and travel.</p>
+                </div>
+              </div>
+              <div class="advisory-card">
+                <div class="advisory-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div>
+                  <span class="advisory-title">Safety Precautions</span>
+                  <p id="precautionsAdvice" class="advisory-text">Stay hydrated if temperature exceeds 30°C.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Probability Distribution Bars -->
+            <div class="probabilities-section">
+              <h4>Class Probability Distribution</h4>
+              <div class="prob-list" id="probListContainer">
+                <!-- Dynamically generated bars -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: LIVE CITY DETECTION ================= -->
+      <section id="tab-live" class="tab-pane">
+        <div class="live-search-banner glass-card">
+          <div class="search-title-row">
+            <div>
+              <h2><i class="fa-solid fa-location-crosshairs"></i> Real-Time Worldwide Telemetry & ML Detection</h2>
+              <p>Type any city or country worldwide to fetch live satellite & station telemetry, then evaluate it with our ML classifier in real-time.</p>
+            </div>
+          </div>
+
+          <form id="liveSearchForm" class="live-search-bar">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="cityInput" placeholder="Enter city name (e.g., Tokyo, London, New York, Mumbai, Paris, Sydney)..." autocomplete="off" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-satellite-dish"></i> Fetch & Detect
+            </button>
+            <button type="button" id="geoBtn" class="btn btn-secondary" title="Use My Current GPS Location">
+              <i class="fa-solid fa-location-arrow"></i> My Location
+            </button>
+          </form>
+
+          <!-- Quick City Chips -->
+          <div class="quick-cities">
+            <span>Quick Cities:</span>
+            <button class="city-chip" data-city="New York">New York</button>
+            <button class="city-chip" data-city="London">London</button>
+            <button class="city-chip" data-city="Tokyo">Tokyo</button>
+            <button class="city-chip" data-city="Mumbai">Mumbai</button>
+            <button class="city-chip" data-city="Paris">Paris</button>
+            <button class="city-chip" data-city="Dubai">Dubai</button>
+            <button class="city-chip" data-city="Reykjavik">Reykjavik</button>
+            <button class="city-chip" data-city="Sydney">Sydney</button>
+          </div>
+        </div>
+
+        <div id="liveLoading" class="loading-state hidden">
+          <div class="spinner"></div>
+          <p>Querying Open-Meteo satellite & ground stations, and running ML inference...</p>
+        </div>
+
+        <div id="liveError" class="alert-box error hidden">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span id="liveErrorMessage">Error fetching live weather.</span>
+        </div>
+
+        <div id="liveResultContainer" class="live-result-grid hidden">
+          <!-- City & Telemetry Card -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <div>
+                <h3 id="liveCityName"><i class="fa-solid fa-map-pin"></i> Tokyo, Japan</h3>
+                <p id="liveCoords" class="text-muted">Lat: 35.6895 &bull; Lon: 139.6917 &bull; Timezone: Asia/Tokyo</p>
+              </div>
+              <span class="badge badge-live"><i class="fa-solid fa-wifi"></i> Live Feed</span>
+            </div>
+
+            <!-- Telemetry Metrics Grid -->
+            <div class="telemetry-badges-grid" id="liveTelemetryGrid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- ML Classification Result for Live City -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-robot"></i> ML Detection Output</h3>
+              <span class="confidence-tag" id="liveConfidence">99.2% Confidence</span>
+            </div>
+
+            <div class="prediction-hero">
+              <div class="weather-icon-display" id="liveWeatherIcon">⛅</div>
+              <div class="weather-name-box">
+                <h3 id="liveWeatherName">Partly Cloudy / Overcast</h3>
+                <p id="liveHeadline" class="weather-headline">Detected from live atmospheric measurements</p>
+              </div>
+            </div>
+
+            <div class="weather-synopsis-box">
+              <p id="liveDescription">High cloud cover with moderate humidity and normal atmospheric pressure.</p>
+            </div>
+
+            <div class="probabilities-section">
+              <h4>Model Probability Distribution</h4>
+              <div class="prob-list" id="liveProbList">
+                <!-- Dynamically generated bars -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: MODEL DIAGNOSTICS & CONFUSION MATRIX ================= -->
+      <section id="tab-analytics" class="tab-pane">
+        <div class="stats-cards-grid">
+          <div class="stat-card glass-card">
+            <div class="stat-icon bg-blue"><i class="fa-solid fa-bullseye"></i></div>
+            <div class="stat-info">
+              <span class="stat-label">Model Accuracy</span>
+              <h3 class="stat-value" id="diagAccuracy">99.97%</h3>
+              <span class="stat-sub">Stratified 20% test partition</span>
+            </div>
+          </div>
+
+          <div class="stat-card glass-card">
+            <div class="stat-icon bg-emerald"><i class="fa-solid fa-database"></i></div>
+            <div class="stat-info">
+              <span class="stat-label">Dataset Records</span>
+              <h3 class="stat-value" id="diagSamples">15,000</h3>
+              <span class="stat-sub">Meteorological observations</span>
+            </div>
+          </div>
+
+          <div class="stat-card glass-card">
+            <div class="stat-icon bg-purple"><i class="fa-solid fa-network-wired"></i></div>
+            <div class="stat-info">
+              <span class="stat-label">Estimators</span>
+              <h3 class="stat-value">120 Trees</h3>
+              <span class="stat-sub">Random Forest Ensemble</span>
+            </div>
+          </div>
+
+          <div class="stat-card glass-card">
+            <div class="stat-icon bg-orange"><i class="fa-solid fa-layer-group"></i></div>
+            <div class="stat-info">
+              <span class="stat-label">Weather Classes</span>
+              <h3 class="stat-value">6 Categories</h3>
+              <span class="stat-sub">Balanced distribution</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-layout-grid">
+          <!-- Feature Importance Chart Card -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <div>
+                <h3><i class="fa-solid fa-chart-bar"></i> Feature Importance (Gini Impurity)</h3>
+                <p>Which atmospheric features influence the decision trees most strongly</p>
+              </div>
+            </div>
+            <div class="feature-importance-list" id="featureImportanceList">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Confusion Matrix Card -->
+          <div class="card glass-card">
+            <div class="card-header">
+              <div>
+                <h3><i class="fa-solid fa-table-cells"></i> Confusion Matrix Heatmap</h3>
+                <p>Predictions vs Actual Labels on 3,000 holdout test samples</p>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="confusion-table" id="confusionTable">
+                <!-- Dynamically populated -->
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Algorithmic Architecture Explainer Card -->
+        <div class="card glass-card mt-4">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-microchip"></i> Machine Learning Architecture & Physics Logic</h3>
+          </div>
+          <div class="architecture-content">
+            <div class="arch-block">
+              <h4>1. Preprocessing Pipeline</h4>
+              <p>Numerical features undergo standardized z-score feature scaling via <code>StandardScaler</code> to normalize vastly differing dimensional scales (pressure at ~1013 hPa vs visibility at ~10 km).</p>
+            </div>
+            <div class="arch-block">
+              <h4>2. Random Forest Classification</h4>
+              <p>Constructed with 120 de-correlated decision trees (max depth 16) utilizing bootstrapped bagging and random feature subspaces. Decision thresholds dynamically isolate non-linear weather phenomena such as dew point saturation for fog and barometric pressure drops for severe storms.</p>
+            </div>
+            <div class="arch-block">
+              <h4>3. Calibration & Probability Estimation</h4>
+              <p>Calculates normalized class vote frequencies across all decision trees to provide genuine probabilistic confidence scores for each distinct weather classification.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: REST API ================= -->
+      <section id="tab-api" class="tab-pane">
+        <div class="card glass-card">
+          <div class="card-header">
+            <div>
+              <h2><i class="fa-solid fa-terminal"></i> REST API Documentation & Live Tester</h2>
+              <p>Programmatically detect weather conditions by sending JSON payloads to the endpoint</p>
+            </div>
+          </div>
+
+          <div class="api-endpoint-box">
+            <span class="http-method post">POST</span>
+            <code class="endpoint-url">http://127.0.0.1:5000/api/predict</code>
+          </div>
+
+          <div class="api-demo-grid">
+            <div class="api-editor-col">
+              <h4>Request JSON Payload:</h4>
+              <textarea id="apiPayload" class="code-editor" rows="12">{
+  "temperature": 28.5,
+  "humidity": 88.0,
+  "wind_speed": 45.0,
+  "precipitation": 25.0,
+  "cloud_cover": 95.0,
+  "atmospheric_pressure": 992.0,
+  "visibility": 3.0,
+  "uv_index": 1.0
+}</textarea>
+              <button id="apiSendBtn" class="btn btn-primary mt-2">
+                <i class="fa-solid fa-paper-plane"></i> Execute API Call
+              </button>
+            </div>
+
+            <div class="api-output-col">
+              <h4>API Response:</h4>
+              <pre id="apiOutput" class="code-preview">Click "Execute API Call" to test the endpoint...</pre>
+            </div>
+          </div>
+
+          <div class="curl-box mt-4">
+            <h4>cURL Command:</h4>
+            <pre class="curl-code">curl -X POST http://127.0.0.1:5000/api/predict \
+  -H "Content-Type: application/json" \
+  -d '{"temperature": 28.5, "humidity": 88.0, "wind_speed": 45.0, "precipitation": 25.0, "cloud_cover": 95.0, "atmospheric_pressure": 992.0, "visibility": 3.0, "uv_index": 1.0}'</pre>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>AtmosphereAI &bull; Machine Learning Weather Classification &bull; Flask + Scikit-Learn Engine</p>
+    </footer>
+  </div>
+
+  <!-- Floating Voice Agent Button -->
+  <button id="floatingVoiceBtn" class="floating-voice-fab" title="Talk to Multilingual Weather Voice Agent">
+    <div class="fab-pulse"></div>
+    <i class="fa-solid fa-microphone-lines"></i>
+    <span class="fab-label">Voice AI</span>
+  </button>
+
+  <!-- Multilingual Voice AI Assistant Modal -->
+  <div id="voiceModal" class="voice-modal-backdrop hidden">
+    <div class="voice-modal glass-card">
+      <div class="voice-modal-header">
+        <div class="voice-agent-branding">
+          <div class="voice-orb" id="voiceOrb">
+            <div class="orb-core"></div>
+            <div class="orb-ring ring-1"></div>
+            <div class="orb-ring ring-2"></div>
+          </div>
+          <div>
+            <h3>Aura Voice AI</h3>
+            <p>Multilingual Weather Intelligence Agent</p>
+          </div>
+        </div>
+        <div class="voice-header-actions">
+          <!-- Language Selector -->
+          <div class="lang-select-wrapper">
+            <i class="fa-solid fa-language lang-icon"></i>
+            <select id="voiceLanguageSelect" class="lang-dropdown">
+              <option value="en">🌐 English (US / UK)</option>
+              <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
+              <option value="es">🇪🇸 Español (Spanish)</option>
+              <option value="fr">🇫🇷 Français (French)</option>
+              <option value="de">🇩🇪 Deutsch (German)</option>
+              <option value="zh">🇨🇳 中文 (Chinese)</option>
+              <option value="ja">🇯🇵 日本語 (Japanese)</option>
+              <option value="ar">🇸🇦 العربية (Arabic)</option>
+              <option value="pt">🇧🇷 Português (Portuguese)</option>
+              <option value="ru">🇷🇺 Русский (Russian)</option>
+              <option value="it">🇮🇹 Italiano (Italian)</option>
+              <option value="ko">🇰🇷 한국어 (Korean)</option>
+            </select>
+          </div>
+          <button id="closeVoiceModal" class="btn-icon" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <!-- Audio Visualizer Waves -->
+      <div class="visualizer-container" id="visualizerContainer">
+        <div class="visualizer-bar bar-1"></div>
+        <div class="visualizer-bar bar-2"></div>
+        <div class="visualizer-bar bar-3"></div>
+        <div class="visualizer-bar bar-4"></div>
+        <div class="visualizer-bar bar-5"></div>
+        <div class="visualizer-bar bar-6"></div>
+        <div class="visualizer-bar bar-7"></div>
+        <div class="visualizer-bar bar-8"></div>
+      </div>
+
+      <!-- Status Text -->
+      <div class="voice-status" id="voiceStatusText">
+        Click the microphone or choose a prompt to start talking...
+      </div>
+
+      <!-- Conversation Dialog Box -->
+      <div class="voice-dialog-box" id="voiceDialogBox">
+        <div class="dialog-bubble user-bubble hidden" id="userBubble">
+          <span class="bubble-tag">You:</span>
+          <span id="userSpeechText"></span>
+        </div>
+        <div class="dialog-bubble ai-bubble" id="aiBubble">
+          <span class="bubble-tag">Aura Voice AI:</span>
+          <span id="aiSpeechText">Hello! I am your AtmosphereAI Voice Agent. You can speak to me in any language to ask about live weather, what to wear, or atmospheric predictions.</span>
+        </div>
+      </div>
+
+      <!-- Quick Voice Prompts in Selected Language -->
+      <div class="voice-prompts-section">
+        <span class="prompts-label"><i class="fa-solid fa-lightbulb"></i> Try asking:</span>
+        <div class="voice-prompt-chips" id="voicePromptChips">
+          <!-- Dynamically populated based on active language -->
+        </div>
+      </div>
+
+      <!-- Voice Controls Bottom Bar -->
+      <div class="voice-controls-bar">
+        <form id="voiceTextInputForm" class="voice-text-fallback">
+          <input type="text" id="voiceTextInput" placeholder="Or type your question in any language..." autocomplete="off">
+          <button type="submit" class="btn-send-text" title="Send message"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+
+        <div class="mic-controls">
+          <button id="mainMicBtn" class="main-mic-button" title="Start / Stop Speaking">
+            <i class="fa-solid fa-microphone" id="mainMicIcon"></i>
+          </button>
+          <button id="stopAudioBtn" class="stop-audio-btn hidden" title="Mute / Stop Voice Output">
+            <i class="fa-solid fa-volume-xmark"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
